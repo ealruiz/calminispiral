@@ -49,9 +49,9 @@ After executing all steps, we retrieve the calibrated light curves on different 
 ## Additional step:
 ### Correcting low elevation effects at ALMA B6 spw2 (after flagging absorption line at 227 GHz).
 
-The "LCurves_final_calibration.py" script loads the **'*.fit' files** generated on **step 3** of the main script, and before the calibration of the flux variability of the compact core using the extended structure of the source (the minispiral), done in **step 4**, will first flag some outliers after an automatic identification, and then correct the low elevation effects on ALMA spectral window 2, caused by the absoprtion line at 227 GHz.
+The "LCurves_final_calibration.py" script loads the **'*.fit' files** generated on **step 3** of the main script and, before the calibration of the flux variability of the compact core using the extended structure of the source (the minispiral), done in **step 4**, will flag some outliers after an automatic identification and correct the low elevation effects on ALMA spectral window 2 caused by the absoprtion line at 227 GHz.
 
-This script needs setting up the following configuration parameters:
+This script requires setting up the following configuration parameters:
   * **DATNAM**: Common name of all ".ms" files.
   * **TRACKS**: List of tracks where SgrA was observed.
   * **FLAG_OUTLIERS**: Boolean flag. Default: False; set True to flag specific outliers AFTER a manual inspection of the Stokes I light curves. The flag info should be stored in a "SGRA_flag_info_TRACK_spwN.dat" file (which must be in the main folder, together with the ".fit" files), with two columns: [time1,time2]		[min_flux,max_flux].
