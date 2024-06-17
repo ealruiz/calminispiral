@@ -23,7 +23,7 @@ The code begins by setting up various configuration parameters needed for each s
   * **IMSIZE**: Image size (number of pixels) for the CLEAN process.
   * **Ns**: Nyquist sampling parameter.
   * **Bmax**: The greatest projected baseline length, representing the highest resolution.
-  * Cell: Cell size for imaging, calculated based on Nyquist sampling and Bmax.
+  * **Cell**: Cell size for imaging, calculated based on Nyquist sampling and Bmax.
 * Step 2:
   * **REMOVE\_CENTER**: Boolean flag indicating whether to remove SgrA* from the extended model (recommended to be *True* to study the minispiral of SgrA*.
   * **REMOVE\_ALL\_CENTER\_BEAM**: Boolean flag indicating whether to set the central pixel to zero or the average in-beam extended brightness.
@@ -60,5 +60,5 @@ Additionally, the next parameters are needed for the automatic flagging of outli
   * **TIME_GAPS**: Array with the duration of gaps in the signal (depends on the sampling). If the signal has more noise, then this can be larger to include more data and increase the SNR.
   * **FLAG_FACT**: Array with the "noise level" used to flag outliers. The script will flag data if the "noise" at a given time is greater than FLAG_FACT times the noise avg.; recommended to begin testing: 5. The higher the value, the more data points will be flagged.
   * **FLAG_SCAN_FACT**: Array with the maximum percentage of data points vs. noise. If the noise is greater, then will flag the whole scan; recommended to begin testing: 0.5; if you want to MANUALLY select the scans, set to 0.1 (only the worst scans will be flagged, not common).
-  * **SGRA_MIN** and **SGRA_MAX**: Minimum and maximum allowed SgrA flux densities, to flag bad integrations.
+  * **SGRA_MIN**, **SGRA_MAX**: Minimum and maximum allowed SgrA flux densities, to flag bad integrations.
 
