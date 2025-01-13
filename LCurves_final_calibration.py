@@ -36,14 +36,6 @@ AUTO_FLAGGING = False # True to perform a flagging using a spline of the Stokes 
 SAVE_OUTLIERS = False # True to save the identified outliers in the GOOD column. IMPORTANT: ONLY DO THIS IF YOU ARE SURE OF THE MANUAL OUTLIERS. AFTER FLAGGING MANUAL OUTLIERS, SET FLAG_OUTLIERS = False (i.e. ONLY DO THE MANUAL FLAGGING ONCE!)
 
 ### params for automatic flagging of outliers
-### TODO: possible improvement (it may not work, this is just to remember the idea)
-'''
-	The High-Pass filter periodogram has a better spline fit to signal with gaps. Instead of the worse approach followed in this script, it would be better to use the spline curve implemented in the C++ code, and then flag outliers.
-	Therefore, TIME_GAPS will not be needed, after implementing this changes.
-'''
-
-
-
 """
 How to flag the outliers?
 
