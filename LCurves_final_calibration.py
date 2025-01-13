@@ -49,7 +49,7 @@ How to flag the outliers?
 
 1. If there are isolated data points (which can appear during the QA2+minispiral calibration)
 	1.1. fill a "SGRA_flag_info_TRACK_spwN.dat" file (which must be in the main folder, together with the .fit files),
-   ### Structure of the .dat: two columns: [time1,time2]		[min_flux,max_flux]
+   		### Structure of the .dat: two columns: [time1,time2]		[min_flux,max_flux]
 	1.2. set
 		FLAG_OUTLIERS = True
 		AUTO_FLAGGING = False
@@ -76,7 +76,7 @@ How to flag the outliers?
 		FLAG_OUTLIERS = True
 		AUTO_FLAGGING = False
 		SAVE_OUTLIERS = True
-			and run the script to obtain the LCs without any outliers.
+	     and run the script to obtain the LCs without any outliers.
 """
 
 ### set duration of gaps in the signal (depends on the sampling). If the signal has more noise, then this can be larger to include more data and increase the SNR
