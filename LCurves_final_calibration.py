@@ -19,7 +19,10 @@ if True:
   plt.rcParams.update(params)
 
 """
-IMPORTANT: this code performs the LCurve analysis from data calibrated using the minispiral calibration method (see github), and as a result, the fitname read in this script follows the naming and structure used in that script. If you used that script, change the MSNAME to the name used there. If not, consider saving your Light curves following the same nomenclature, or edit this script to fit your needs.
+IMPORTANT: this code performs the LCurve analysis from data calibrated using the minispiral calibration method (see github), and
+as a result, the fitname read in this script follows the naming and structure used in that script.
+If you used that script, change the MSNAME to the name used there.
+If not, consider saving your Light curves following the same nomenclature, or edit this script to fit your needs.
 """
 
 SOURCE = 'SGRA'
@@ -76,7 +79,7 @@ How to flag the outliers?
 		FLAG_OUTLIERS = True
 		AUTO_FLAGGING = False
 		SAVE_OUTLIERS = True
-	     and run the script to obtain the LCs without any outliers.
+		and run the script to obtain the LCs without any outliers.
 """
 
 ### set duration of gaps in the signal (depends on the sampling). If the signal has more noise, then this can be larger to include more data and increase the SNR
