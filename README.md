@@ -41,7 +41,7 @@ The code begins by setting up various configuration parameters needed for each s
 ## Data products
 
 After executing all steps, we retrieve the calibrated light curves on different files. Here's a brief description:
-* **'*.fit' file**: The **FIT_ARRAY**, obtained after the visibility model-fitting, is stored into a '*.fit' file with the following info., for each spectral window (spw): 'JDTime', 'I Extended', 'I Compact', 'I LongBas', 'Q', 'U', 'V', 'Error Ext.', 'Error Comp.', 'Covariance', 'Error Q', 'Error U', 'Error V'.
+* **'*.fit' file**: The **FIT_ARRAY**, obtained after the visibility model-fitting, is stored into a '*.fit' file with the following info., for each spectral window (spw): 'JDTime', 'I Extended', 'I Compact', 'I LongBas', 'Q', 'U', 'V', 'Error Ext.', 'Error Comp.', 'Covariance', 'Error Q', 'Error U', 'Error V', 'GOODS'.
   * *Warning*: the stokes parameters are not scaled by the gains (i.e. AVERAGE/I_extended at each integration time, for each spw)
 * **'Light_Curve_SPWi_*.dat'**: Preliminary calibrated light curves (scaled by gains) are saved in an ascii with the following info.: MJD, I(Jy), Ierr(Jy), P(Jy), Perr(Jy), EVPA(deg), EVPAerr(deg), V(Jy), Verr(Jy).
 
@@ -55,10 +55,10 @@ This script requires setting up the following configuration parameters:
   * **DATNAM**: Common name of all ".ms" files.
   * **TRACKS**: List of tracks where SgrA was observed.
   * **FLAG_OUTLIERS**: Boolean flag. Default: False; set True to flag specific outliers AFTER a manual inspection of the Stokes I light curves. The flag info should be stored in a "SGRA_flag_info_TRACK_spwN.dat" file (which must be in the main folder, together with the ".fit" files), with two columns: [time1,time2]		[min_flux,max_flux].
-
-Additionally, the next parameters are needed for the automatic flagging of outliers (each parameter is an array with one value per track):
-  * **TIME_GAPS**: Array with the duration of gaps in the signal (depends on the sampling). If the signal has more noise, the time lag can be larger to include more data and increase the SNR.
-  * **FLAG_FACT**: Array with the "noise level" used to flag outliers. The script will flag data if the "noise" at a given time is greater than FLAG_FACT times the noise avg.; recommended to begin testing: 5. The higher the value, the more data points will be flagged.
-  * **FLAG_SCAN_FACT**: Array with the maximum percentage of data points vs. noise. If the noise is greater, then will flag the whole scan; recommended to begin testing: 0.5; if you want to MANUALLY select the scans, set to 0.1 (only the worst scans will be flagged, not common).
-  * **SGRA_MIN**, **SGRA_MAX**: Minimum and maximum allowed SgrA flux densities, to flag bad integrations.
-
+  * **AUTO_FLAGGING**: Boolean flag. Default: False; ser True to perform an automatic flagging. The next parameters are needed for the automatic flagging of outliers (each parameter is an array with one value per track):
+    * **TIME_GAPS**: Array with the duration of gaps in the signal (depends on the sampling). If the signal has more noise, the time lag can be larger to include more data and increase the SNR.
+    * **FLAG_FACT**: Array with the "noise level" used to flag outliers. The script will flag data if the "noise" at a given time is greater than FLAG_FACT times the noise avg.; recommended to begin testing: 5. The higher the value, the more data points will be flagged.
+    * **FLAG_SCAN_FACT**: Array with the maximum percentage of data points vs. noise. If the noise is greater, then will flag the whole scan; recommended to begin testing: 0.5; if you want to MANUALLY select the scans, set to 0.1 (only the worst scans will be flagged, not common).
+    * **SGRA_MINI**, **SGRA_MAXI**: Minimum and maximum allowed SgrA flux densities, to flag bad integrations.
+    * **SGRA_MAXP**: Maximum allowed SgrA polarized intensity, to flag bad integrations.
+  * **SAVE_OUTLIERS**: Boolean flag. Default: False; set True to mark the flagged data points as False entries in the 'GOODS' column of the '*.fit' file.
