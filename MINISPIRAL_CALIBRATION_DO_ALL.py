@@ -75,13 +75,6 @@ USE_SELFCAL_DATA = False ### False if FIRST ITER (i.e. NOT repeating steps)
 # Minimum and maximum allowed SgrA* flux densities,
 # to flag bad integrations: SET MANUALLY!!!
 SGRA_MIN = 1.5 ; SGRA_MAX = 4.5
-# Maximum allowed SgrA* polarized intensity
-# to flag bad integrations: SET MANUALLY!!!
-SGRA_MAX_PolI = 0.4
-
-# Correct lower flux density at ALMA B6 spw2
-# **IMPORTANT** Set False if not working with ALMA B6 observations
-CORRECT_SPW2_B6 = True
 
 # Export calibrated minispiral visibilities??
 # This is NEEDED **IF STEP 5** is going to be run!
@@ -281,7 +274,7 @@ if 2 in mysteps:
 
 		pl.sca(EXT_SUBP)
 		EXT_SUBP.clear()
-		EXT_SUBP.imshow(np.transpose(ConvClean),origin='lower',interpolation='nearest', cmap='Greys')
+			EXT_SUBP.imshow(np.transpose(ConvClean),origin='lower',interpolation='nearest', cmap='Greys')
 		EXT_SUBP.set_title('EXTENDED MODEL %s'%(MSNAME[:-3]))
 		pl.savefig('%s_EXT-MODEL.png'%(MSNAME[:-3]))
 		
@@ -358,7 +351,6 @@ if 3 in mysteps:
 		WGT = tb.getcol('WEIGHT')
 		A1 = tb.getcol('ANTENNA1')
 		A2 = tb.getcol('ANTENNA2')
-		FG[:] = False
 		FG[:,:,A1==A2] = True
 		
 		# So we use the selfcal data for fitting?
@@ -573,30 +565,6 @@ if 3 in mysteps:
 if 4 in mysteps:
 	print('\n\n  %s \n'%thesteps[4])
 	
-	AVERAGE_ALL = []
-	for track in TRACKS:
-		MSNAME = '%s_%s.ms'%(DATNAM,track)
-		
-		fitname = 'SGRA_FIT_%s'%MSNAME[:-3]
-		
-		## Read pickled file (BEWARE if you use CASA 6.x):
-		INF = open('%s.fit'%fitname,'r')
-		LCData = pk.load(INF)
-		INF.close()
-		
-		TOFLAG = []
-		GOODS = []
-		for i in range(4):
-			FLAG = LCData[0][i]['I Extended']<0.0
-			FLAG_GOOD = LCData[0][i]['Good'] == False
-			TOFLAG.append(np.logical_or(FLAG,FLAG_GOOD))
-			GOODS.append(np.logical_not(TOFLAG[i]))
-		
-		AVERAGE_ALL.append([np.median(LCData[0][i]['I Extended'][GOODS[i]]) for i in range(4)])
-	
-	AVERAGE = np.median(np.array(AVERAGE_ALL),axis=0)
-	print('\nAll epoch minispiral flux density (per spw): ',AVERAGE)
-	
 	for track in TRACKS:
 		MSNAME = '%s_%s.ms'%(DATNAM,track)
 		
@@ -623,6 +591,21 @@ if 4 in mysteps:
 		pl.suptitle('REAL DATA',fontsize=25)
 		pl.savefig('step4_LCURVES.png')
 		
+		TOFLAG = []
+		GOODS = []
+		for i in range(4):
+			FLAG = LCData[0][i]['I Extended']<0.0
+			times = LCData[0][i]['JDTime']
+			#for t in range(len(times)-1):
+			#	if times[t+1]-times[t]>100. and not FLAG[t]:
+			#		FLAG[t+1] = True
+			TOFLAG.append(FLAG)
+			GOODS.append(np.logical_not(FLAG))
+		
+		AVERAGE = [np.average(LCData[0][i]['I Extended'][GOODS[i]]) for i in range(4)]
+		print('Average minispiral flux density (per spw): ',AVERAGE)
+		
+		
 		if EXPORT_MINISPIRAL:
 			# Update the corrected column of the measurement set.
 			# It will now contain the minispiral data, normalized to the flux-density average:
@@ -643,27 +626,15 @@ if 4 in mysteps:
 			os.system('rm -rf %s_ExtendedData'%MSNAME)
 			split(vis=MSNAME,outputvis='%s_ExtendedData'%MSNAME,datacolumn='corrected')
 		
-		### Get the final Light Curves		
-		TOFLAG = []
-		GOODS = []
-		for i in range(4):
-			FLAG = LCData[0][i]['I Extended']<0.0
-			FLAG_GOOD = LCData[0][i]['Good'] == False
-			TOFLAG.append(np.logical_or(FLAG,FLAG_GOOD))
-			GOODS.append(np.logical_not(TOFLAG[i]))
-		
 		# Compute gains (avg/extended) to scale the Stokes parameters retrieved from step 3
 		GAINS = [AVERAGE[i]/LCData[0][i]['I Extended'] for i in range(4)]
 		
 		SGRA_I = [LCData[0][i]['I Compact']*GAINS[i] for i in range(4)]
-		SGRA_I_EXTEND = [LCData[0][i]['I Extended'] for i in range(4)]
 		SGRA_Q = [LCData[0][i]['Q']*GAINS[i] for i in range(4)]
 		SGRA_U = [LCData[0][i]['U']*GAINS[i] for i in range(4)]
 		SGRA_V = [LCData[0][i]['V']*GAINS[i] for i in range(4)]
-		TIMES  = [LCData[0][i]['JDTime']/86400. for i in range(4)]
-		MINT   = int(np.min(TIMES[0]))
-		
-		SGRA_P = [np.sqrt(np.array(SGRA_U[i])**2. + np.array(SGRA_Q[i])**2.) for i in range(4)]
+		TIMES = [LCData[0][i]['JDTime']/86400. for i in range(4)]
+		MINT = int(np.min(TIMES[0]))
 		
 		Ierr = [LCData[0][i]['Error Comp.']*GAINS[i] for i in range(4)]
 		Qerr = [LCData[0][i]['Error Q']*GAINS[i] for i in range(4)]
@@ -673,77 +644,13 @@ if 4 in mysteps:
 		# Compute outlier flags:
 		for i in range(4):
 			TOFLAG[i][np.logical_or(SGRA_I[i] < SGRA_MIN, SGRA_I[i]>SGRA_MAX)] = True
-			TOFLAG[i][np.logical_or(SGRA_P[i] < 0., SGRA_P[i]>SGRA_MAX_PolI)] = True
 		
-		TIMES_FLAG = []
-		SGRA_I_FLAG,SGRA_I_EXTEND_FLAG, SGRA_Q_FLAG,SGRA_U_FLAG,SGRA_V_FLAG = [],[],[],[],[]
-		Ierr_FLAG, Qerr_FLAG, Uerr_FLAG, Verr_FLAG = [],[],[],[]
-		for k in range(4):
-			FLAGMASK = np.logical_not(TOFLAG[k])
-			TIMES_FLAG.append(TIMES[k][FLAGMASK])
-			SGRA_I_FLAG.append(SGRA_I[k][FLAGMASK])
-			SGRA_I_EXTEND_FLAG.append(SGRA_I_EXTEND[k][FLAGMASK])
-			SGRA_Q_FLAG.append(SGRA_Q[k][FLAGMASK])
-			SGRA_U_FLAG.append(SGRA_U[k][FLAGMASK])
-			SGRA_V_FLAG.append(SGRA_V[k][FLAGMASK])
-			Ierr_FLAG.append(Ierr[k][FLAGMASK])
-			Qerr_FLAG.append(Qerr[k][FLAGMASK])
-			Uerr_FLAG.append(Uerr[k][FLAGMASK])
-			Verr_FLAG.append(Verr[k][FLAGMASK])
-		del LCData, SGRA_I,SGRA_I_EXTEND, SGRA_Q,SGRA_U,SGRA_V, Ierr,Qerr,Uerr,Verr, GAINS, GOODS,TOFLAG,FLAGMASK, INF, SGRA_P
+		# Derive polarization intensity and EVPA:
+		EVPA = [180./np.pi*np.arctan2(SGRA_U[i],SGRA_Q[i])/2. for i in range(4)]
+		P = [np.sqrt(SGRA_U[i]**2. + SGRA_Q[i]**2.) for i in range(4)]
 		
-		# Correct instrumental effects affecting spw2 using the minispiral flux of spw3
-		if CORRECT_SPW2_B6:
-			Time_spw2 = [ti - MINT for ti in TIMES_FLAG[2]]
-			Time_spw3 = [ti - MINT for ti in TIMES_FLAG[3]]
-			LCurve_spw2 = np.array(SGRA_I_EXTEND_FLAG[2])
-			LCurve_spw3 = np.array(SGRA_I_EXTEND_FLAG[3])
-			StkI_spw2 = np.array(SGRA_I_FLAG[2])
-			StkI_spw3 = np.array(SGRA_I_FLAG[3])
-			# we need to find the intersection of all times accross spws 2 and 3
-			TIMES_TO_FIT = [Time_spw2,Time_spw3]
-			# First, we create a dictionary to count the occurrence of each time
-			time_count = {}
-			# Then, we count all the occurrences of a time accross all spws
-			for times in TIMES_TO_FIT:
-				for time in times:
-					if time in time_count:
-						time_count[time] += 1
-					else:
-						time_count[time] = 1
-			# And we find the times coincident for all spws	
-			times_coincident = [time for time, count in time_count.items() if count == len(TIMES_TO_FIT)]
-			time_indx = []
-			for times in TIMES_TO_FIT:
-				indexes = [i for i, time in enumerate(times) if time in times_coincident]
-				time_indx.append(indexes)
-			TIME_spws = sorted(times_coincident)
-			LCURVE_spw2, LCURVE_spw3 = [], []
-			for tindx,time in enumerate(TIME_spws):
-				spw2_time_indx = time_indx[0][tindx]
-				spw3_time_indx = time_indx[1][tindx]
-				LCURVE_spw2.append(LCurve_spw2[spw2_time_indx])
-				LCURVE_spw3.append(LCurve_spw3[spw3_time_indx])
-			LCurve_ratio_spws = np.array(np.array(LCURVE_spw2)/np.array(LCURVE_spw3))
-			del time_count, indexes, times_coincident, times, time_indx, TIMES_TO_FIT
-			
-			# Fit flux ratio of spw2 vs 3 to a spline
-			coefficients = np.polyfit(TIME_spws, LCurve_ratio_spws, 11.)
-			flux_fit = np.poly1d(coefficients)
-			
-			# Correct spw2 fluxes
-			SGRA_I_FLAG[2] = [SGRA_I_FLAG[2][tindx]*flux_fit(time-MINT) for tindx,time in enumerate(TIMES_FLAG[2])]
-			SGRA_I_EXTEND_FLAG[2] = [SGRA_I_EXTEND_FLAG[2][tindx]/flux_fit(time-MINT) for tindx,time in enumerate(TIMES_FLAG[2])]
-			SGRA_Q_FLAG[2] = [SGRA_Q_FLAG[2][tindx]*flux_fit(time-MINT) for tindx,time in enumerate(TIMES_FLAG[2])]
-			SGRA_U_FLAG[2] = [SGRA_U_FLAG[2][tindx]*flux_fit(time-MINT) for tindx,time in enumerate(TIMES_FLAG[2])]
-			SGRA_V_FLAG[2] = [SGRA_V_FLAG[2][tindx]*flux_fit(time-MINT) for tindx,time in enumerate(TIMES_FLAG[2])]
-		
-	# Derive polarization intensity and EVPA:
-		EVPA = [180./np.pi*np.arctan2(SGRA_U_FLAG[i],SGRA_Q_FLAG[i])/2. for i in range(4)]
-		P   = [np.sqrt(np.array(SGRA_U_FLAG[i])**2. + np.array(SGRA_Q_FLAG[i])**2.) for i in range(4)]
-		
-		Perr  = [np.sqrt((SGRA_Q_FLAG[i]/P[i]*Qerr_FLAG[i])**2. + (SGRA_U_FLAG[i]/P[i]*Uerr_FLAG[i])**2.) for i in range(4)]
-		Phierr = [1./(P[i]**2.)*np.sqrt((SGRA_Q_FLAG[i]*Uerr_FLAG[i])**2. + (SGRA_U_FLAG[i]*Qerr_FLAG[i])**2.)*180./np.pi for i in range(4)]
+		Perr = [np.sqrt((SGRA_Q[i]/P[i]*Qerr[i])**2. + (SGRA_U[i]/P[i]*Uerr[i])**2.) for i in range(4)]
+		Phierr = [1./(P[i]**2.)*np.sqrt((SGRA_Q[i]*Uerr[i])**2. + (SGRA_U[i]*Qerr[i])**2.)*180./np.pi for i in range(4)]
 		
 		# Make plots:
 		cols = ['r','g','b','k']
@@ -755,11 +662,12 @@ if 4 in mysteps:
 		fig.subplots_adjust(wspace=0.01,hspace=0.01,right=0.98,left=0.07)
 		fig.suptitle('LCurve for %s'%MSNAME,fontsize=25)
 		for i in range(4):
-			TimePlot = TIMES_FLAG[i]-MINT
-			sub1.plot(TimePlot,SGRA_I_FLAG[i],'o%s'%cols[i],label='spw%i'%i)
-			sub2.plot(TimePlot,P[i],'o%s'%cols[i])
-			sub3.plot(TimePlot,EVPA[i],'o%s'%cols[i])
-			sub4.plot(TimePlot,SGRA_V_FLAG[i],'o%s'%cols[i])
+			PLOTMASK = np.logical_not(TOFLAG[i])
+			TimePlot = TIMES[i][PLOTMASK]-MINT
+			sub1.plot(TimePlot,SGRA_I[i][PLOTMASK],'o%s'%cols[i],label='spw%i'%i)
+			sub2.plot(TimePlot,P[i][PLOTMASK],'o%s'%cols[i])
+			sub3.plot(TimePlot,EVPA[i][PLOTMASK],'o%s'%cols[i])
+			sub4.plot(TimePlot,SGRA_V[i][PLOTMASK],'o%s'%cols[i])
 		
 		pl.sca(sub1)
 		pl.legend(numpoints=1)
@@ -774,9 +682,11 @@ if 4 in mysteps:
 		sub3.set_ylabel('EVPA (deg.)')
 		sub4.set_ylabel('V (Jy)')
 		
-		sub1.set_ylim((0.0,np.max(SGRA_I_FLAG[3])*1.1))
-		sub2.set_ylim((0.0,np.max(P[3])*1.1))
 		sub3.set_ylim((-210.,210.))
+		#sub3.set_ylim((-181.,181.))
+		sub1.set_ylim((0.01,np.max(SGRA_I[3][PLOTMASK])*1.1))
+		sub2.set_ylim((0.01,np.max(P[3][PLOTMASK])*1.1))
+		sub4.set_ylim((np.min(SGRA_V[3][PLOTMASK])*1.3,np.max(SGRA_V[3][PLOTMASK])*5.))
 		
 		pl.savefig('%s_LCurve.png'%MSNAME[:-3])
 		pl.savefig('%s_LCurve.pdf'%MSNAME[:-3])
@@ -786,12 +696,12 @@ if 4 in mysteps:
 		for i in range(4):
 			OFF = open('Light_Curve_SPW%i_%s.dat'%(i,MSNAME[:-3]),'w')
 			print >> OFF,'MJD   I(Jy) Ierr(Jy)    P(Jy) Perr(Jy)    EVPA(deg) EVPAerr(deg)   V(Jy) Verr(Jy)'
-			for ent,_ in enumerate(TIMES_FLAG[i]):
-				Iw = SGRA_I_FLAG[i][ent]; Ie = Ierr_FLAG[i][ent]
+			for ent in np.where(np.logical_not(TOFLAG[i]))[0]:
+				Iw = SGRA_I[i][ent]; Ie = Ierr[i][ent]
 				Pw = P[i][ent]; Pe = Perr[i][ent]
 				Phiw = EVPA[i][ent]; Phie = Phierr[i][ent]
-				Vw = SGRA_V_FLAG[i][ent]; Ve = Verr_FLAG[i][ent]
-				Tw = TIMES_FLAG[i][ent]
+				Vw = SGRA_V[i][ent]; Ve = Verr[i][ent]
+				Tw = TIMES[i][ent]
 				print >> OFF, '%.16e     %.4e %.4e      %.4e %.4e     %.4e %.4e     %.4e %.4e'%(Tw, Iw, Ie, Pw, Pe,Phiw,Phie,Vw,Ve)
 			OFF.close()
 
